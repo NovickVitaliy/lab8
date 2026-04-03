@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket Booking API — Swagger UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css" />
+  <style>
+    body { margin: 0; background: #fafafa; }
+    #swagger-ui .topbar { background-color: #1a1a2e; }
+    #swagger-ui .topbar-wrapper img { display: none; }
+    #swagger-ui .topbar-wrapper::before {
+      content: "🎫 Ticket Booking API";
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.min.js"></script>
+  <script>
+    window.onload = () => {
+      SwaggerUIBundle({
+        url: "../api/openapi.yaml",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout",
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        tryItOutEnabled: true,
+      });
+    };
+  </script>
+</body>
+</html>

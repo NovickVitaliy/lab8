@@ -1,0 +1,534 @@
+openapi: 3.0.3
+
+info:
+  title: Ticket Booking API
+  description: |
+    REST API сервіс для бронювання квитків.
+
+    API є **внутрішнім** і використовується SPA/mobile-клієнтами.
+    Надає контракт для управління користувачами, квитками, бронюваннями та платежами.
+
+    Всі захищені ендпоінти вимагають JWT Bearer Token у заголовку `Authorization`.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@ticketbooking.dev
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api.ticketbooking.dev
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Реєстрація та автентифікація
+  - name: Tickets
+    description: Пошук доступних квитків
+  - name: Bookings
+    description: Управління бронюваннями
+  - name: Payments
+    description: Обробка платежів
+
+paths:
+
+  # ─── AUTH ────────────────────────────────────────────────────────────────
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Реєстрація нового користувача
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: user@example.com
+              password: SecurePass123
+      responses:
+        '201':
+          description: Користувача успішно зареєстровано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email вже зайнятий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Вхід та отримання JWT-токена
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: SecurePass123
+      responses:
+        '200':
+          description: Успішна автентифікація
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/users/me:
+    get:
+      tags: [Auth]
+      summary: Отримати профіль поточного користувача
+      responses:
+        '200':
+          description: Профіль користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── TICKETS ─────────────────────────────────────────────────────────────
+
+  /api/tickets:
+    get:
+      tags: [Tickets]
+      summary: Пошук доступних квитків
+      security: []
+      parameters:
+        - name: from
+          in: query
+          description: Місто відправлення
+          schema:
+            type: string
+          example: Kyiv
+        - name: to
+          in: query
+          description: Місто прибуття
+          schema:
+            type: string
+          example: Lviv
+        - name: date
+          in: query
+          description: Дата поїздки (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+          example: '2025-06-01'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список доступних квитків
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Отримати квиток за ID
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Деталі квитка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── BOOKINGS ────────────────────────────────────────────────────────────
+
+  /api/bookings:
+    get:
+      tags: [Bookings]
+      summary: Список бронювань поточного користувача
+      responses:
+        '200':
+          description: Список бронювань
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Bookings]
+      summary: Створити нове бронювання
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+            example:
+              ticketId: 'd290f1ee-6c54-4b01-90e6-d701748f0851'
+      responses:
+        '201':
+          description: Бронювання створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Квиток вже заброньований
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Отримати бронювання за ID
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Деталі бронювання
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Bookings]
+      summary: Скасувати бронювання
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Бронювання скасовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Неможливо скасувати — вже оплачено або минув термін
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─── PAYMENTS ────────────────────────────────────────────────────────────
+
+  /api/payments:
+    post:
+      tags: [Payments]
+      summary: Ініціювати оплату бронювання
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+            example:
+              bookingId: 'a1b2c3d4-0000-0000-0000-000000000001'
+              method: card
+      responses:
+        '200':
+          description: Оплату ініційовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Статус платежу
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Деталі платежу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ─── COMPONENTS ──────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      description: UUID ресурсу
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Невалідний запит
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Потрібна автентифікація
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не знайдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: NOT_FOUND
+        message:
+          type: string
+          example: Resource not found
+
+    # AUTH
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT Bearer Token
+        expiresIn:
+          type: integer
+          description: Час дії токена у секундах
+          example: 86400
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    # TICKETS
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        from:
+          type: string
+          example: Kyiv
+        to:
+          type: string
+          example: Lviv
+        date:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: float
+          example: 350.00
+        currency:
+          type: string
+          example: UAH
+        available:
+          type: boolean
+
+    TicketList:
+      type: object
+      properties:
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+
+    # BOOKINGS
+
+    CreateBookingRequest:
+      type: object
+      required: [ticketId]
+      properties:
+        ticketId:
+          type: string
+          format: uuid
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        ticketId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+          example: pending
+        createdAt:
+          type: string
+          format: date-time
+        paymentId:
+          type: string
+          format: uuid
+          nullable: true
+
+    BookingList:
+      type: object
+      properties:
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+
+    # PAYMENTS
+
+    CreatePaymentRequest:
+      type: object
+      required: [bookingId, method]
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        method:
+          type: string
+          enum: [card, apple_pay, google_pay]
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, success, failed]
+        method:
+          type: string
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: UAH
+        createdAt:
+          type: string
+          format: date-time

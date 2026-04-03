@@ -25,6 +25,12 @@ nav:
       - Traceability Matrix: quality/traceability-matrix.md
   - Розробникам:
       - Onboarding: developer/onboarding.md
+  - API:
+      - OpenAPI (Swagger UI): api/swagger-ui.html
+  - Процеси:
+      - CI/CD Pipeline: ci-cd-docs.md
+      - Definition of Done: definition-of-done.md
+      - UI Components (Storybook): storybook.md
 
 markdown_extensions:
   - tables
