@@ -12,6 +12,7 @@ REST API сервіс для бронювання квитків.
 - [System Design](docs/architecture/SDD.md)
 - [Infrastructure](docs/architecture/ISD.md)
 - [Test Strategy](docs/quality/test-strategy.md)
+- [Description](docs/Description.md)
 
 ## 🚀 Швидкий старт
 

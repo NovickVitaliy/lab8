@@ -31,6 +31,8 @@ nav:
       - CI/CD Pipeline: ci-cd-docs.md
       - Definition of Done: definition-of-done.md
       - UI Components (Storybook): storybook.md
+  - Опис:
+      - Опис: Description.md
 
 markdown_extensions:
   - tables
